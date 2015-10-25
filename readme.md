@@ -1,3 +1,4 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/nroo8lnhdvft0jc0?svg=true)](https://ci.appveyor.com/project/michielpost/appveyordeployconsole)
 #AppVeyor Deploy Console
 
 This console app lets you combine multiple AppVeyor Deploy Environments into a single group so you can kick off a deployment to a whole group at once.
