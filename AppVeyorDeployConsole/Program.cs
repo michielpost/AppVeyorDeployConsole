@@ -160,9 +160,52 @@ namespace AppVeyorDeployConsole
 			if (answer.Equals("Y", StringComparison.InvariantCultureIgnoreCase))
 			{
 				//Create new deploys for each environment in this group
-				await DeployEnvironmentGroup(picked, buildVersion);
+				var deploymentIds = await DeployEnvironmentGroup(picked, buildVersion);
+
+				//Monitor deployments
+				await WaitForDeployments(deploymentIds);
 
 			}
+		}
+
+		private static async Task WaitForDeployments(Dictionary<int, string> deployments)
+		{
+			List<Task<string>> deploymentTasks = new List<Task<string>>();
+
+			foreach(var deployment in deployments)
+			{
+				deploymentTasks.Add(WaitForDeployment(deployment.Key, deployment.Value));
+			}
+
+			Console.WriteLine("Waiting for deployments to finish...");
+
+
+			await Task.WhenAll(deploymentTasks);
+
+			Console.WriteLine("All deployments FINISHED.");
+		}
+
+		private static async Task<string> WaitForDeployment(int deploymentId, string envName)
+		{
+			bool finished = false;
+			string status = "";
+
+			while(!finished)
+			{
+				await Task.Delay(TimeSpan.FromSeconds(5));
+
+				DeploymentDetailsResponse details = await _appVeyorService.GetDeploymentDetails(deploymentId);
+				
+				if(!string.IsNullOrEmpty(details.Deployment.Finished))
+				{
+					finished = true;
+					status = details.Deployment.Status;
+				}
+			}
+
+			Console.WriteLine("Deploy {0} finished with status {1}", envName, finished);
+
+			return status;
 		}
 
 		/// <summary>
@@ -171,21 +214,31 @@ namespace AppVeyorDeployConsole
 		/// <param name="picked"></param>
 		/// <param name="buildVersion"></param>
 		/// <returns></returns>
-		private static async Task DeployEnvironmentGroup(EnvironmentGroup picked, string buildVersion)
+		private static async Task<Dictionary<int, string>> DeployEnvironmentGroup(EnvironmentGroup picked, string buildVersion)
 		{
+			Dictionary<int,string> deployments = new Dictionary<int,string>();
+
 			foreach(var env in picked.Environments)
 			{
-				bool success = await _appVeyorService.DeployEnvironment(picked.Project, env, buildVersion);
+				try
+				{
+					var response = await _appVeyorService.DeployEnvironment(picked.Project, env, buildVersion);
 
-				if (success)
-					Console.WriteLine("Success, started deploy to: " + env.Name);
-				else
+					deployments.Add(response.DeploymentId, env.Name);
+
+                    Console.WriteLine("Success, started deploy to: " + env.Name);
+
+				}
+				catch
+				{
 					Console.WriteLine("FAILED to start deploy to: " + env.Name);
+				}
 
 			}
 
 			Console.WriteLine("Deployments are NOT finished yet.");
-			Console.WriteLine("Check the progress of your deployements on ci.appveyor.com");
+
+			return deployments;
 
 		}
 

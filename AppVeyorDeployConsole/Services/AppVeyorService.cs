@@ -31,7 +31,7 @@ namespace AppVeyorDeployConsole.Services
 		/// <param name="env"></param>
 		/// <param name="buildVersion"></param>
 		/// <returns></returns>
-		public async Task<bool> DeployEnvironment(AppVeyorProject project, AppVeyorEnvironment env, string buildVersion)
+		public async Task<StartDeploymentResponse> DeployEnvironment(AppVeyorProject project, AppVeyorEnvironment env, string buildVersion)
 		{
 			NewDeploy deploy = new Models.NewDeploy()
 			{
@@ -47,7 +47,13 @@ namespace AppVeyorDeployConsole.Services
 
 			using (var response = await httpClient.PostAsync("https://ci.appveyor.com/api/deployments", new StringContent(envJson, Encoding.UTF8, "application/json")))
 			{
-				return response.IsSuccessStatusCode;
+				response.EnsureSuccessStatusCode();
+
+				var resultJson = await response.Content.ReadAsStringAsync();
+
+				var result = JsonConvert.DeserializeObject<StartDeploymentResponse>(resultJson);
+
+				return result;
 			}
 		}
 
@@ -85,6 +91,20 @@ namespace AppVeyorDeployConsole.Services
 				return result;
 			}
 
+		}
+
+		public async Task<DeploymentDetailsResponse> GetDeploymentDetails(int deploymentId)
+		{
+			using (var response = await httpClient.GetAsync("https://ci.appveyor.com/api/deployments/" + deploymentId))
+			{
+				response.EnsureSuccessStatusCode();
+
+				var resultJson = await response.Content.ReadAsStringAsync();
+
+				var result = JsonConvert.DeserializeObject<DeploymentDetailsResponse>(resultJson);
+
+				return result;
+			}
 		}
 	}
 }
