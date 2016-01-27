@@ -8,6 +8,9 @@ They each have their own deploy environment on AppVeyor. When you want to deploy
 
 With this console app, you can create 1 deployment group and include the Web, CMS and API environments and then trigger a deploy.
 
+##Download
+[Download latest version from build server.](https://ci.appveyor.com/project/michielpost/appveyordeployconsole/build/artifacts)
+
 ##Usage
 The console app asks for your AppVeyor key so it can communicate on your behalf with the AppVeyor api.
 They key is not stored or used for anything else then communicating with AppVeyor.
