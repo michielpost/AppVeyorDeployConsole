@@ -75,6 +75,21 @@ namespace AppVeyorDeployConsole.Services
 
 		}
 
+		public async Task<List<AppVeyorEnvironment>> GetAllAppVeyorEnvironmentsForProject(string projectId)
+		{
+			using (var response = await httpClient.GetAsync($"https://ci.appveyor.com/api/projects/{projectId}/deployable-environments"))
+			{
+				response.EnsureSuccessStatusCode();
+
+				var resultJson = await response.Content.ReadAsStringAsync();
+
+				var result = JsonConvert.DeserializeObject<List<AppVeyorEnvironment>>(resultJson);
+
+				return result;
+			}
+
+		}
+
 		/// <summary>
 		/// https://ci.appveyor.com/api/projects
 		/// </summary>

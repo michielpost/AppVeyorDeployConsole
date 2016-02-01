@@ -88,7 +88,7 @@ namespace AppVeyorDeployConsole
 			newGroup.Project = pickedProject;
 
 			//Get all environments 
-			var allEnv = await _appVeyorService.GetAllAppVeyorEnvironments();
+			var allEnv = await _appVeyorService.GetAllAppVeyorEnvironmentsForProject(newGroup.Project.AccountName + "/" + newGroup.Project.Slug);
 
 			AskForEnvironment(newGroup, allEnv);
 
