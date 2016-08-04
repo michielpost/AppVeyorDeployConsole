@@ -203,7 +203,7 @@ namespace AppVeyorDeployConsole
 				}
 			}
 
-			Console.WriteLine("Deploy {0} finished with status {1}", envName, finished);
+			Console.WriteLine("Deploy {0} finished with status {1}", envName, status);
 
 			return status;
 		}
