@@ -121,5 +121,26 @@ namespace AppVeyorDeployConsole.Services
 				return result;
 			}
 		}
+
+		/// <summary>
+		/// Get deployable builds. This returns a list of builds, with the newest first (and oldest) last.
+		/// </summary>
+		/// <param name="accountName"></param>
+		/// <param name="projectSlug"></param>
+		/// <returns></returns>
+		public async Task<DeployableBuildsResponse> GetDeployableBuilds(string accountName, string projectSlug)
+		{
+			// https://{{baseUrl}}/api/projects/{{accountName}}/{{projectSlug}}/deployable-builds
+			using (var response = await httpClient.GetAsync($"https://ci.appveyor.com/api/projects/{accountName}/{projectSlug}/deployable-builds"))
+			{
+				response.EnsureSuccessStatusCode();
+
+				var resultJson = await response.Content.ReadAsStringAsync();
+
+				var result = JsonConvert.DeserializeObject<DeployableBuildsResponse>(resultJson);
+
+				return result;
+			}
+		}
 	}
 }

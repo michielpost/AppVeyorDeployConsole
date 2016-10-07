@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace AppVeyorDeployConsole.Models
 {
@@ -17,6 +13,7 @@ namespace AppVeyorDeployConsole.Models
 		public string Name { get; set; }
 
 		public List<AppVeyorEnvironment> Environments { get; set; }
+
 		public AppVeyorProject Project { get; set; }
 	}
 }
