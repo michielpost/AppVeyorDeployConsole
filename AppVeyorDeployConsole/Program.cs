@@ -156,6 +156,10 @@ namespace AppVeyorDeployConsole
 			Console.WriteLine();
 			Console.WriteLine("Last (top 5) deployable builds for branch 'develop'");
 			var deployableBuildsResponse = await _appVeyorService.GetDeployableBuilds(picked.Project.AccountName, picked.Project.Slug);
+
+			// filter out:
+			// pullRequestId's - when given, then these builds are associated with PR's. Which we do not want
+			// branch == develop - we only care about 'develop' branches.
 			var developBuilds = deployableBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
 
 			int count = 1;
