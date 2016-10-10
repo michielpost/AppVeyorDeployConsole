@@ -142,5 +142,26 @@ namespace AppVeyorDeployConsole.Services
 				return result;
 			}
 		}
+
+		/// <summary>
+		/// Get last x builds for project.
+		/// </summary>
+		/// <param name="accountName"></param>
+		/// <param name="projectSlug"></param>
+		/// <returns></returns>
+		public async Task<ProjectBuildHistoryResponse> GetProjectBuilds(string accountName, string projectSlug, int records = 10)
+		{
+			// https://{{baseUrl}}/api/projects/{{accountName}}/{{projectSlug}}/history?
+			using (var response = await httpClient.GetAsync($"https://ci.appveyor.com/api/projects/{accountName}/{projectSlug}/history?recordsNumber={records}"))
+			{
+				response.EnsureSuccessStatusCode();
+
+				var resultJson = await response.Content.ReadAsStringAsync();
+
+				var result = JsonConvert.DeserializeObject<ProjectBuildHistoryResponse>(resultJson);
+
+				return result;
+			}
+		}
 	}
 }
