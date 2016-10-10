@@ -166,13 +166,13 @@ namespace AppVeyorDeployConsole
 			// filter out:
 			// pullRequestId's - when given, then these builds are associated with PR's. Which we do not want
 			// branch == develop - we only care about 'develop' branches.
-			var deployableDevelopBuilds = deployableBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
-			var allDevelopBuilds = projectBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
+			var deployableDevelopBuilds = deployableBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == "develop").ToList();
+			var allDevelopBuilds = projectBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == "develop").ToList();
 
 			int count = 1;
-			foreach (DeployableBuild deployableBuild in deployableDevelopBuilds)
+			foreach (Build deployableBuild in deployableDevelopBuilds)
 			{
-				Console.WriteLine($"{deployableBuild.version} / {deployableBuild.branch} / commit message:\n{deployableBuild.message}\n");
+				Console.WriteLine($"{deployableBuild.Version} / {deployableBuild.Branch} / commit message:\n{deployableBuild.Message}\n");
 				count++;
 				if (count > 5) break;
 			}
@@ -181,19 +181,19 @@ namespace AppVeyorDeployConsole
 			if (allDevelopBuilds.Count > 0 && deployableDevelopBuilds.Count > 0)
 			{
 				var projectBuild = allDevelopBuilds.First();
-				Console.WriteLine($"Comparing versions of latest build vs latest deployable: {projectBuild.version} vs {latestDeployableBuild.version}");
-				if (projectBuild.version != latestDeployableBuild.version)
+				Console.WriteLine($"Comparing versions of latest build vs latest deployable: {projectBuild.Version} vs {latestDeployableBuild.Version}");
+				if (projectBuild.Version != latestDeployableBuild.Version)
 				{
 					Console.WriteLine();
 					Console.WriteLine("!! WARNING !! -> Newer (non-deployable) build detected:");
 					Console.WriteLine(
-						$"Build version: {projectBuild.version} - status: {projectBuild.status} - branch: {projectBuild.branch} - message: {projectBuild.message}");
+						$"Build version: {projectBuild.Version} - status: {projectBuild.Status} - branch: {projectBuild.Branch} - message: {projectBuild.Message}");
 					Console.WriteLine("!! WARNING !!");
 				}
 			}
 
 			//Get version to deploy
-			string buildVersion = latestDeployableBuild?.version;
+			string buildVersion = latestDeployableBuild?.Version;
 			Console.WriteLine();
 			Console.WriteLine("-------------------------------------------------------");
 			Console.Write($"Enter build version to deploy (default {buildVersion}) : ");

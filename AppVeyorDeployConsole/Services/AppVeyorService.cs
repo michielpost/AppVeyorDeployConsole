@@ -128,7 +128,7 @@ namespace AppVeyorDeployConsole.Services
 		/// <param name="accountName"></param>
 		/// <param name="projectSlug"></param>
 		/// <returns></returns>
-		public async Task<DeployableBuildsResponse> GetDeployableBuilds(string accountName, string projectSlug)
+		public async Task<BuildListResponse> GetDeployableBuilds(string accountName, string projectSlug)
 		{
 			// https://{{baseUrl}}/api/projects/{{accountName}}/{{projectSlug}}/deployable-builds
 			using (var response = await httpClient.GetAsync($"https://ci.appveyor.com/api/projects/{accountName}/{projectSlug}/deployable-builds"))
@@ -137,7 +137,7 @@ namespace AppVeyorDeployConsole.Services
 
 				var resultJson = await response.Content.ReadAsStringAsync();
 
-				var result = JsonConvert.DeserializeObject<DeployableBuildsResponse>(resultJson);
+				var result = JsonConvert.DeserializeObject<BuildListResponse>(resultJson);
 
 				return result;
 			}
@@ -149,7 +149,7 @@ namespace AppVeyorDeployConsole.Services
 		/// <param name="accountName"></param>
 		/// <param name="projectSlug"></param>
 		/// <returns></returns>
-		public async Task<ProjectBuildHistoryResponse> GetProjectBuilds(string accountName, string projectSlug, int records = 10)
+		public async Task<BuildListResponse> GetProjectBuilds(string accountName, string projectSlug, int records = 10)
 		{
 			// https://{{baseUrl}}/api/projects/{{accountName}}/{{projectSlug}}/history?
 			using (var response = await httpClient.GetAsync($"https://ci.appveyor.com/api/projects/{accountName}/{projectSlug}/history?recordsNumber={records}"))
@@ -158,7 +158,7 @@ namespace AppVeyorDeployConsole.Services
 
 				var resultJson = await response.Content.ReadAsStringAsync();
 
-				var result = JsonConvert.DeserializeObject<ProjectBuildHistoryResponse>(resultJson);
+				var result = JsonConvert.DeserializeObject<BuildListResponse>(resultJson);
 
 				return result;
 			}
