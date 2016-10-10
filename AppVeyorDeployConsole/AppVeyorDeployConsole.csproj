@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Models\AppVeyorEnvironment.cs" />
     <Compile Include="Models\AppVeyorProject.cs" />
+    <Compile Include="Models\DeployableBuildsResponse.cs" />
     <Compile Include="Models\DeploymentDetailsResponse.cs" />
     <Compile Include="Models\EnvironmentGroup.cs" />
     <Compile Include="Models\NewDeploy.cs" />

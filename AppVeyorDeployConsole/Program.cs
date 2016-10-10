@@ -27,7 +27,7 @@ namespace AppVeyorDeployConsole
 
 		static Task MainAsync(string[] args)
 		{
-			string appVeyorKey = null;
+			string appVeyorKey = "";
 
 			//Get AppVeyor API key from first argument
 			if (args.Any())
@@ -146,16 +146,47 @@ namespace AppVeyorDeployConsole
 			var menu = new TypedMenu<EnvironmentGroup>(groupList, "Choose a number", x => x.Name);
 			var picked = menu.Display();
 
-			Console.WriteLine("Going to deploy: " + picked.Name);
+			Console.WriteLine("Deploying");
+			Console.WriteLine("---------");
+			Console.WriteLine("Environment group: " + picked.Name);
 			Console.WriteLine("Project: " + picked.Project.Name);
-			picked.Environments.ForEach(x => Console.WriteLine("Env: " + x.Name));
+			Console.WriteLine();
+			Console.WriteLine("AppVeyor environments:");
+			picked.Environments.ForEach(x => Console.WriteLine("  - " + x.Name));
+			Console.WriteLine();
+			Console.WriteLine("Last (top 5) deployable builds for branch 'develop'");
+			var deployableBuildsResponse = await _appVeyorService.GetDeployableBuilds(picked.Project.AccountName, picked.Project.Slug);
+
+			// filter out:
+			// pullRequestId's - when given, then these builds are associated with PR's. Which we do not want
+			// branch == develop - we only care about 'develop' branches.
+			var developBuilds = deployableBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
+
+			int count = 1;
+			// show the top 5 builds
+			foreach (DeployableBuild deployableBuild in developBuilds)
+			{
+				Console.WriteLine($"Build version: {deployableBuild.version} - status: {deployableBuild.status} - branch: {deployableBuild.branch}");
+				count++;
+				if (count > 5) break;
+			}
 
 			//Get version to deploy
-			Console.WriteLine("Enter build version to deploy:");
-			var buildVersion = Console.ReadLine();
+			string buildVersion = developBuilds.First()?.version;
+			Console.WriteLine();
+			Console.WriteLine($"Enter build version to deploy (default {buildVersion}):");
+			var inputVersion = Console.ReadLine();
+			if (!string.IsNullOrEmpty(inputVersion))
+			{
+				buildVersion = inputVersion;
+			}
 
+			Console.WriteLine();
+			Console.WriteLine($"You want to deploy {buildVersion}");
 			Console.WriteLine("Are you sure? (Y/N) (default N)");
 			var answer = Console.ReadLine();
+
+			Console.WriteLine();
 
 			if (answer.Equals("Y", StringComparison.InvariantCultureIgnoreCase))
 			{
@@ -164,7 +195,6 @@ namespace AppVeyorDeployConsole
 
 				//Monitor deployments
 				await WaitForDeployments(deploymentIds);
-
 			}
 		}
 
@@ -172,16 +202,18 @@ namespace AppVeyorDeployConsole
 		{
 			List<Task<string>> deploymentTasks = new List<Task<string>>();
 
-			foreach(var deployment in deployments)
+			foreach (var deployment in deployments)
 			{
 				deploymentTasks.Add(WaitForDeployment(deployment.Key, deployment.Value));
 			}
 
+			Console.WriteLine();
 			Console.WriteLine("Waiting for deployments to finish...");
-
+			Console.WriteLine();
 
 			await Task.WhenAll(deploymentTasks);
 
+			Console.WriteLine();
 			Console.WriteLine("All deployments FINISHED.");
 		}
 
@@ -190,20 +222,20 @@ namespace AppVeyorDeployConsole
 			bool finished = false;
 			string status = "";
 
-			while(!finished)
+			while (!finished)
 			{
 				await Task.Delay(TimeSpan.FromSeconds(5));
 
 				DeploymentDetailsResponse details = await _appVeyorService.GetDeploymentDetails(deploymentId);
-				
-				if(!string.IsNullOrEmpty(details.Deployment.Finished))
+
+				if (!string.IsNullOrEmpty(details.Deployment.Finished))
 				{
 					finished = true;
 					status = details.Deployment.Status;
 				}
 			}
 
-			Console.WriteLine("Deploy {0} finished with status {1}", envName, status);
+			Console.WriteLine($" - Deploy {envName} finished with status: {status}");
 
 			return status;
 		}
@@ -216,27 +248,32 @@ namespace AppVeyorDeployConsole
 		/// <returns></returns>
 		private static async Task<Dictionary<int, string>> DeployEnvironmentGroup(EnvironmentGroup picked, string buildVersion)
 		{
-			Dictionary<int,string> deployments = new Dictionary<int,string>();
-
-			foreach(var env in picked.Environments)
+			Dictionary<int, string> deployments = new Dictionary<int, string>();
+			Console.WriteLine("-------------------");
+			Console.WriteLine("Starting Deployment");
+			Console.WriteLine("-------------------");
+			foreach (var env in picked.Environments)
 			{
 				try
 				{
+					Console.Write($"Starting deploy for {env.Name} build version {buildVersion}...");
+
 					var response = await _appVeyorService.DeployEnvironment(picked.Project, env, buildVersion);
 
 					deployments.Add(response.DeploymentId, env.Name);
 
-                    Console.WriteLine("Success, started deploy to: " + env.Name);
+					Console.WriteLine("Success!");
 
 				}
 				catch
 				{
-					Console.WriteLine("FAILED to start deploy to: " + env.Name);
+					Console.WriteLine("FAILED!");
 				}
 
 			}
 
-			Console.WriteLine("Deployments are NOT finished yet.");
+			Console.WriteLine();
+			Console.WriteLine("Deployments are started.");
 
 			return deployments;
 
