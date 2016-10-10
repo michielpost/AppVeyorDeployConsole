@@ -152,34 +152,57 @@ namespace AppVeyorDeployConsole
 			Console.WriteLine("Project: " + picked.Project.Name);
 			Console.WriteLine();
 			Console.WriteLine("AppVeyor environments:");
-			picked.Environments.ForEach(x => Console.WriteLine("  - " + x.Name));
+			picked.Environments.ForEach(x => Console.WriteLine(" - " + x.Name));
 			Console.WriteLine();
-			Console.WriteLine("Last (top 5) deployable builds for branch 'develop'");
+			Console.Write("(develop) Fetching last 10 project builds...");
+			var projectBuildsResponse = await _appVeyorService.GetProjectBuilds(picked.Project.AccountName, picked.Project.Slug);
+			Console.WriteLine("Done!");
+			Console.Write("(develop) Fetching last deployable builds...");
 			var deployableBuildsResponse = await _appVeyorService.GetDeployableBuilds(picked.Project.AccountName, picked.Project.Slug);
-
+			Console.WriteLine("Done!");
+			Console.WriteLine();
+			Console.WriteLine("Last 5 deployable (succesful) builds");
+			Console.WriteLine("------------------------------------");
 			// filter out:
 			// pullRequestId's - when given, then these builds are associated with PR's. Which we do not want
 			// branch == develop - we only care about 'develop' branches.
-			var developBuilds = deployableBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
+			var deployableDevelopBuilds = deployableBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
+			var allDevelopBuilds = projectBuildsResponse.builds.Where(b => string.IsNullOrEmpty(b.pullRequestId) && b.branch == "develop").ToList();
 
 			int count = 1;
-			// show the top 5 builds
-			foreach (DeployableBuild deployableBuild in developBuilds)
+			foreach (DeployableBuild deployableBuild in deployableDevelopBuilds)
 			{
-				Console.WriteLine($"Build version: {deployableBuild.version} - status: {deployableBuild.status} - branch: {deployableBuild.branch}");
+				Console.WriteLine($"{deployableBuild.version} / {deployableBuild.branch} / commit message:\n{deployableBuild.message}\n");
 				count++;
 				if (count > 5) break;
 			}
 
+			var latestDeployableBuild = deployableDevelopBuilds.First();
+			if (allDevelopBuilds.Count > 0 && deployableDevelopBuilds.Count > 0)
+			{
+				var projectBuild = allDevelopBuilds.First();
+				Console.WriteLine($"Comparing versions of latest build vs latest deployable: {projectBuild.version} vs {latestDeployableBuild.version}");
+				if (projectBuild.version != latestDeployableBuild.version)
+				{
+					Console.WriteLine();
+					Console.WriteLine("!! WARNING !! -> Newer (non-deployable) build detected:");
+					Console.WriteLine(
+						$"Build version: {projectBuild.version} - status: {projectBuild.status} - branch: {projectBuild.branch} - message: {projectBuild.message}");
+					Console.WriteLine("!! WARNING !!");
+				}
+			}
+
 			//Get version to deploy
-			string buildVersion = developBuilds.First()?.version;
+			string buildVersion = latestDeployableBuild?.version;
 			Console.WriteLine();
-			Console.WriteLine($"Enter build version to deploy (default {buildVersion}):");
+			Console.WriteLine("-------------------------------------------------------");
+			Console.Write($"Enter build version to deploy (default {buildVersion}) : ");
 			var inputVersion = Console.ReadLine();
 			if (!string.IsNullOrEmpty(inputVersion))
 			{
 				buildVersion = inputVersion;
 			}
+			Console.WriteLine("-------------------------------------------------------");
 
 			Console.WriteLine();
 			Console.WriteLine($"You want to deploy {buildVersion}");
@@ -228,7 +251,7 @@ namespace AppVeyorDeployConsole
 
 				DeploymentDetailsResponse details = await _appVeyorService.GetDeploymentDetails(deploymentId);
 
-				if (!string.IsNullOrEmpty(details.Deployment.Finished))
+				if(!string.IsNullOrEmpty(details.Deployment.Finished))
 				{
 					finished = true;
 					status = details.Deployment.Status;

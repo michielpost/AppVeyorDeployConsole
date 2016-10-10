@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace AppVeyorDeployConsole.Models
 {
-	public class DeployableBuildsResponse
+	public class ProjectBuildHistoryResponse
 	{
-		public List<DeployableBuild> builds { get; set; }
+		public List<ProjectBuild> builds { get; set; }
 	}
 
-	public class DeployableBuild
+	public class ProjectBuild
 	{
 		public string buildNumber { get; set; }
 
