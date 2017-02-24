@@ -79,7 +79,13 @@ namespace AppVeyorDeployConsole
 			EnvironmentGroup newGroup = new EnvironmentGroup();
 			newGroup.Name = groupName;
 
+			Console.WriteLine("Default branch (develop):");
+			var defaultBranch = Console.ReadLine();
+			if(!string.IsNullOrWhiteSpace(defaultBranch))
+				newGroup.DefaultBranch = defaultBranch;
+
 			//Get all projects
+			Console.WriteLine("Fetching projects...");
 			var allProject = await _appVeyorService.GetAllAppVeyorProjects();
 
 			Console.WriteLine("Pick a Project:");
@@ -165,9 +171,12 @@ namespace AppVeyorDeployConsole
 			Console.WriteLine("------------------------------------");
 			// filter out:
 			// pullRequestId's - when given, then these builds are associated with PR's. Which we do not want
-			// branch == develop - we only care about 'develop' branches.
-			var deployableDevelopBuilds = deployableBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == "develop").ToList();
-			var allDevelopBuilds = projectBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == "develop").ToList();
+			var branch = picked.DefaultBranch;
+			if (string.IsNullOrWhiteSpace(branch))
+				branch = "develop";
+
+			var deployableDevelopBuilds = deployableBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == branch).ToList();
+			var allDevelopBuilds = projectBuildsResponse.Builds.Where(b => string.IsNullOrEmpty(b.PullRequestId) && b.Branch == branch).ToList();
 
 			int count = 1;
 			foreach (Build deployableBuild in deployableDevelopBuilds)
@@ -177,12 +186,12 @@ namespace AppVeyorDeployConsole
 				if (count > 5) break;
 			}
 
-			var latestDeployableBuild = deployableDevelopBuilds.First();
+			var latestDeployableBuild = deployableDevelopBuilds.FirstOrDefault();
 			if (allDevelopBuilds.Count > 0 && deployableDevelopBuilds.Count > 0)
 			{
 				var projectBuild = allDevelopBuilds.First();
 				Console.WriteLine($"Comparing versions of latest build vs latest deployable: {projectBuild.Version} vs {latestDeployableBuild.Version}");
-				if (projectBuild.Version != latestDeployableBuild.Version)
+				if (projectBuild.Version != latestDeployableBuild?.Version)
 				{
 					Console.WriteLine();
 					Console.WriteLine("!! WARNING !! -> Newer (non-deployable) build detected:");
@@ -196,7 +205,11 @@ namespace AppVeyorDeployConsole
 			string buildVersion = latestDeployableBuild?.Version;
 			Console.WriteLine();
 			Console.WriteLine("-------------------------------------------------------");
-			Console.Write($"Enter build version to deploy (default {buildVersion}) : ");
+			if (!string.IsNullOrEmpty(buildVersion))
+				Console.Write($"Enter build version to deploy (default {buildVersion}) : ");
+			else
+				Console.Write($"Enter build version to deploy: ");
+
 			var inputVersion = Console.ReadLine();
 			if (!string.IsNullOrEmpty(inputVersion))
 			{

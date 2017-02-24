@@ -12,6 +12,8 @@ namespace AppVeyorDeployConsole.Models
 
 		public string Name { get; set; }
 
+		public string DefaultBranch { get; set; }
+
 		public List<AppVeyorEnvironment> Environments { get; set; }
 
 		public AppVeyorProject Project { get; set; }
