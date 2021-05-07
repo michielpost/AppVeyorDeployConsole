@@ -1,4 +1,3 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/nroo8lnhdvft0jc0?svg=true)](https://ci.appveyor.com/project/michielpost/appveyordeployconsole)
 #AppVeyor Deploy Console
 
 This console app lets you combine multiple AppVeyor Deploy Environments into a single group so you can kick off a deployment to a whole group at once.
@@ -7,9 +6,6 @@ Example, you have a project which contains a Website, CMS and API.
 They each have their own deploy environment on AppVeyor. When you want to deploy a new version of your code, you'll have to trigger 3 deploys though the AppVeyor UI. This can become time consuming.
 
 With this console app, you can create 1 deployment group and include the Web, CMS and API environments and then trigger a deploy.
-
-##Download
-[Download latest version from build server.](https://ci.appveyor.com/project/michielpost/appveyordeployconsole/build/artifacts)
 
 ##Usage
 The console app asks for your AppVeyor key so it can communicate on your behalf with the AppVeyor api.
